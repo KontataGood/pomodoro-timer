@@ -29,16 +29,18 @@ jobs:
           QT_QPA_PLATFORM: offscreen
         run: python -m pytest -q
       - name: Build executable
-        run: >-
-          python -m PyInstaller --noconfirm --clean --onefile --windowed
-          --name PomodoroTimer --collect-all PySide6 main.py
-      - name: Upload Windows EXE artifact
+      - run: >-
+          python -m PyInstaller --noconfirm --clean --onedir --windowed
+          --name PomodoroTimer main.py
+
+      - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: PomodoroTimer-Windows
-          path: dist/PomodoroTimer.exe
+          path: dist/PomodoroTimer/
           if-no-files-found: error
           retention-days: 14
+
 
   build-macos:
     name: Build macOS App
@@ -58,10 +60,12 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: python -m pytest -q
+
       - name: Build macOS app bundle
         run: >-
           python -m PyInstaller --noconfirm --clean --windowed
-          --name PomodoroTimer --collect-all PySide6 main.py
+          --name PomodoroTimer main.py
+
       - name: Package macOS app
         run: ditto -c -k --sequesterRsrc --keepParent dist/PomodoroTimer.app PomodoroTimer-macOS.zip
       - name: Upload macOS app artifact
@@ -88,8 +92,9 @@ jobs:
         with:
           name: PomodoroTimer-macOS
           path: release/macos
-      - name: Package Windows EXE
-        run: cd release/windows && zip ../../PomodoroTimer-Windows.zip PomodoroTimer.exe
+      - name: Package Windows app
+        run: cd release/windows && zip -r ../../PomodoroTimer-Windows.zip PomodoroTimer
+
       - name: Create GitHub Release and attach builds
         uses: softprops/action-gh-release@v2
         with:

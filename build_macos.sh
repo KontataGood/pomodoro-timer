@@ -14,13 +14,14 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt pyinstaller
 
+
 python -m PyInstaller \
-  --noconfirm \
-  --clean \
-  --windowed \
-  --name PomodoroTimer \
-  --collect-all PySide6 \
-  main.py
+    --noconfirm \
+    --clean \
+    --windowed \
+    --name PomodoroTimer \
+    main.py
+
 
 echo
 echo "Build complete: dist/PomodoroTimer.app"

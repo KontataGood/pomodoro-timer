@@ -19,7 +19,7 @@ if errorlevel 1 goto :error
 python -m pip install -r requirements.txt pyinstaller
 if errorlevel 1 goto :error
 
-python -m PyInstaller --noconfirm --clean --onefile --windowed --name PomodoroTimer --collect-all PySide6 main.py
+python -m PyInstaller --noconfirm --clean --onedir --windowed --name PomodoroTimer main.py
 if errorlevel 1 goto :error
 
 echo.
