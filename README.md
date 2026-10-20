@@ -72,8 +72,8 @@ The GitHub Actions workflow at `.github/workflows/build-desktop.yml` builds the 
 To create a GitHub Release with both packaged builds attached, push a version tag:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.2.0
+git push origin v0.2.0
 ```
 
 The workflow builds both platforms and attaches `PomodoroTimer-Windows.zip` and `PomodoroTimer-macOS.zip` to the release.
