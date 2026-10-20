@@ -29,10 +29,24 @@ class PomodoroTimer(QObject):
     LONG_BREAK_SECONDS = 15 * 60
     SESSIONS_BEFORE_LONG_BREAK = 4
 
-    def __init__(self, parent: QObject | None = None) -> None:
+    def __init__(
+            self,
+            parent: QObject | None = None,
+            *,
+            focus_minutes: int = 25,
+            short_break_minutes: int = 5,
+            long_break_minutes: int = 15,
+            sessions_before_long_break: int = 4,
+    ) -> None:
         super().__init__(parent)
+
+        self.focus_seconds = focus_minutes * 60
+        self.short_break_seconds = short_break_minutes * 60
+        self.long_break_seconds = long_break_minutes * 60
+        self.sessions_before_long_break = sessions_before_long_break
+
         self._mode = TimerMode.FOCUS
-        self._remaining = self.FOCUS_SECONDS
+        self._remaining = self.duration_for(TimerMode.FOCUS)
         self._session_count = 0
         self._deadline: float | None = None
         self._running = False
@@ -61,10 +75,11 @@ class PomodoroTimer(QObject):
 
     def duration_for(self, mode: TimerMode | None = None) -> int:
         mode = mode or self._mode
+
         return {
-            TimerMode.FOCUS: self.FOCUS_SECONDS,
-            TimerMode.SHORT_BREAK: self.SHORT_BREAK_SECONDS,
-            TimerMode.LONG_BREAK: self.LONG_BREAK_SECONDS,
+            TimerMode.FOCUS: self.focus_seconds,
+            TimerMode.SHORT_BREAK: self.short_break_seconds,
+            TimerMode.LONG_BREAK: self.long_break_seconds,
         }[mode]
 
     def start(self) -> None:
@@ -130,7 +145,7 @@ class PomodoroTimer(QObject):
             self.session_count_changed.emit(self._session_count)
             next_mode = (
                 TimerMode.LONG_BREAK
-                if self._session_count % self.SESSIONS_BEFORE_LONG_BREAK == 0
+                if self._session_count % self.sessions_before_long_break == 0
                 else TimerMode.SHORT_BREAK
             )
         else:
@@ -140,3 +155,30 @@ class PomodoroTimer(QObject):
         self._remaining = self.duration_for(next_mode)
         self.mode_changed.emit(next_mode)
         self.tick.emit(self._remaining)
+
+    def apply_settings(
+            self,
+            *,
+            focus_minutes: int,
+            short_break_minutes: int,
+            long_break_minutes: int,
+            sessions_before_long_break: int,
+    ) -> None:
+        if min(
+                focus_minutes,
+                short_break_minutes,
+                long_break_minutes,
+                sessions_before_long_break,
+        ) < 1:
+            raise ValueError("Timer settings must be positive")
+
+        if self._running:
+            self.pause()
+
+        self.focus_seconds = focus_minutes * 60
+        self.short_break_seconds = short_break_minutes * 60
+        self.long_break_seconds = long_break_minutes * 60
+        self.sessions_before_long_break = sessions_before_long_break
+
+        self.reset()
+
