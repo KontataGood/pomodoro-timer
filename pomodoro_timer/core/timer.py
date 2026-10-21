@@ -46,7 +46,12 @@ class PomodoroTimer(QObject):
         self.sessions_before_long_break = sessions_before_long_break
 
         self._mode = TimerMode.FOCUS
-        self._remaining = self.duration_for(TimerMode.FOCUS)
+        self._remaining_by_mode = {
+            TimerMode.FOCUS: self.duration_for(TimerMode.FOCUS),
+            TimerMode.SHORT_BREAK: self.duration_for(TimerMode.SHORT_BREAK),
+            TimerMode.LONG_BREAK: self.duration_for(TimerMode.LONG_BREAK),
+        }
+        self._remaining = self._remaining_by_mode[self._mode]
         self._session_count = 0
         self._deadline: float | None = None
         self._running = False
@@ -95,6 +100,7 @@ class PomodoroTimer(QObject):
         if not self._running:
             return
         self._remaining = self.remaining_seconds
+        self._remaining_by_mode[self._mode] = self._remaining
         self._deadline = None
         self._running = False
         self._ticker.stop()
@@ -107,19 +113,24 @@ class PomodoroTimer(QObject):
         self._running = False
         self._deadline = None
         self._remaining = self.duration_for()
+        self._remaining_by_mode[self._mode] = self._remaining
         if was_running:
             self.running_changed.emit(False)
         self.tick.emit(self._remaining)
 
     def set_mode(self, mode: TimerMode) -> None:
-        self._ticker.stop()
+        if mode == self._mode:
+            return
+
         was_running = self._running
-        self._running = False
-        self._deadline = None
-        self._mode = mode
-        self._remaining = self.duration_for(mode)
+
         if was_running:
-            self.running_changed.emit(False)
+            self.pause()
+
+        self._remaining_by_mode[self._mode] = self._remaining
+        self._mode = mode
+        self._remaining = self._remaining_by_mode[mode]
+
         self.mode_changed.emit(mode)
         self.tick.emit(self._remaining)
 
@@ -127,6 +138,9 @@ class PomodoroTimer(QObject):
         remaining = self.remaining_seconds
         if remaining != self._remaining:
             self._remaining = remaining
+            self.tick.emit(remaining)
+            self._remaining = remaining
+            self._remaining_by_mode[self._mode] = remaining
             self.tick.emit(remaining)
         if remaining <= 0:
             self._complete_phase()
