@@ -17,8 +17,10 @@ from pomodoro_timer.ui.translations import translate
 
 class SettingsDialog(QDialog):
     def __init__(
+
         self,
         language: str = "en",
+        theme: str = "dark",
         parent=None,
         focus_minutes: int = 25,
         short_break_minutes: int = 5,
@@ -28,39 +30,10 @@ class SettingsDialog(QDialog):
         super().__init__(parent)
 
         self.language = language
+        self.theme = theme
         self.setMinimumWidth(300)
 
-        self.setStyleSheet("""
-            QDialog {
-                background: #111318;
-                color: #F3F4F6;
-            }
-            QLabel {
-                color: #F3F4F6;
-                font-size: 13px;
-            }
-            QComboBox {
-                background: #20232B;
-                color: #F3F4F6;
-                border: 1px solid #303440;
-                border-radius: 8px;
-                padding: 8px;
-            }
-            QPushButton {
-                border: none;
-                border-radius: 8px;
-                padding: 9px 14px;
-                font-weight: 600;
-            }
-            QPushButton#saveButton {
-                background: #F16B66;
-                color: #171719;
-            }
-            QPushButton#cancelButton {
-                background: #252933;
-                color: #E1E4EA;
-            }
-        """)
+        self.setStyleSheet(self._stylesheet())
 
         self.title_label = QLabel()
         self.language_label = QLabel()
@@ -68,6 +41,18 @@ class SettingsDialog(QDialog):
         self.language_combo = QComboBox()
         self.language_combo.addItem("Русский", "ru")
         self.language_combo.addItem("English", "en")
+
+        index = self.language_combo.findData(language)
+        self.language_combo.setCurrentIndex(max(0, index))
+
+        self.theme_label = QLabel()
+        self.theme_combo = QComboBox()
+        self.theme_combo.addItem("Dark", "dark")
+        self.theme_combo.addItem("Light", "light")
+        self.theme_combo.addItem("Midnight", "midnight")
+
+        theme_index = self.theme_combo.findData(theme)
+        self.theme_combo.setCurrentIndex(max(0, theme_index))
 
         index = self.language_combo.findData(language)
         self.language_combo.setCurrentIndex(max(0, index))
@@ -109,6 +94,11 @@ class SettingsDialog(QDialog):
         layout.addWidget(self.title_label)
         layout.addWidget(self.language_label)
         layout.addWidget(self.language_combo)
+        self.theme_label.setText(
+            translate(self.language, "theme")
+        )
+        layout.addWidget(self.theme_label)
+        layout.addWidget(self.theme_combo)
         self.duration_form = QFormLayout()
         self.duration_form.addRow(
             translate(self.language, "focus_duration"), self.focus_spin
@@ -122,8 +112,6 @@ class SettingsDialog(QDialog):
         self.duration_form.addRow(
             translate(self.language, "sessions_before_long_break"), self.sessions_spin
         )
-        layout.addLayout(self.duration_form)
-
         layout.addLayout(self.duration_form)
         layout.addLayout(buttons)
 
@@ -146,3 +134,74 @@ class SettingsDialog(QDialog):
             "long_break_minutes": self.long_break_spin.value(),
             "sessions_before_long_break": self.sessions_spin.value(),
         }
+
+    def selected_theme(self) -> str:
+        return self.theme_combo.currentData()
+
+    def _stylesheet(self) -> str:
+        themes = {
+            "dark": {
+                "background": "#111318",
+                "text": "#F3F4F6",
+                "field": "#20232B",
+                "border": "#303440",
+                "primary": "#F16B66",
+                "primary_text": "#171719",
+                "secondary": "#252933",
+                "secondary_text": "#E1E4EA",
+            },
+            "light": {
+                "background": "#F4F5F8",
+                "text": "#252936",
+                "field": "#FFFFFF",
+                "border": "#E0E3EB",
+                "primary": "#E76560",
+                "primary_text": "#FFFFFF",
+                "secondary": "#E9ECF2",
+                "secondary_text": "#343A49",
+            },
+            "midnight": {
+                "background": "#0D1020",
+                "text": "#F0F0FF",
+                "field": "#1C2340",
+                "border": "#293152",
+                "primary": "#9585FF",
+                "primary_text": "#111020",
+                "secondary": "#202744",
+                "secondary_text": "#E0E5FF",
+            },
+        }
+
+        c = themes.get(self.theme, themes["dark"])
+
+        return f"""
+            QDialog {{
+                background: {c["background"]};
+                color: {c["text"]};
+            }}
+            QLabel {{
+                color: {c["text"]};
+                font-size: 13px;
+            }}
+            QComboBox, QSpinBox {{
+                background: {c["field"]};
+                color: {c["text"]};
+                border: 1px solid {c["border"]};
+                border-radius: 8px;
+                padding: 8px;
+            }}
+            QPushButton {{
+                border: none;
+                border-radius: 8px;
+                padding: 9px 14px;
+                font-weight: 600;
+            }}
+            QPushButton#saveButton {{
+                background: {c["primary"]};
+                color: {c["primary_text"]};
+            }}
+            QPushButton#cancelButton {{
+                background: {c["secondary"]};
+                color: {c["secondary_text"]};
+            }}
+        """
