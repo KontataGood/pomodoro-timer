@@ -1,3 +1,4 @@
+
 import sys
 
 from PySide6.QtWidgets import QApplication
@@ -10,6 +11,10 @@ def main() -> int:
     app.setApplicationName("Pomodoro Timer")
     app.setOrganizationName("PomodoroTimer")
     app.setStyle("Fusion")
+
+    # Закрытие окна будет обрабатываться самим приложением.
+    # Это позволит сворачивать его в системный трей.
+    #app.setQuitOnLastWindowClosed(False)
 
     window = MainWindow()
     window.show()

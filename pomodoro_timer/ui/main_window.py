@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
-from PySide6.QtCore import QSettings
-
 from pathlib import Path
 
-from pomodoro_timer.core.history import SessionHistory
-from pomodoro_timer.ui.history_dialog import HistoryDialog
-
+from PySide6.QtCore import QSettings
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction, QCloseEvent
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -17,9 +14,15 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
     QDialog,
+    QSystemTrayIcon,
+    QMenu,
+    QApplication,
 )
 
+from pomodoro_timer.core.history import SessionHistory
 from pomodoro_timer.core.timer import PomodoroTimer, TimerMode
+from pomodoro_timer.ui.history_dialog import HistoryDialog
+from pomodoro_timer.ui.mini_timer import MiniTimer
 from pomodoro_timer.ui.settings_dialog import SettingsDialog
 from pomodoro_timer.ui.translations import translate
 
@@ -48,6 +51,7 @@ class MainWindow(QMainWindow):
         }
 
         self.timer = PomodoroTimer(self, **self.timer_settings)
+        self.mini_timer = MiniTimer(self.timer, self)
 
         self.setWindowTitle("Pomodoro Timer")
         self.setMinimumSize(440, 600)
@@ -63,7 +67,7 @@ class MainWindow(QMainWindow):
         brand = QLabel("POMODORO")
         brand.setObjectName("brand")
         header.addWidget(brand)
-        header.addStretch()
+        header.addStretch(1)
         self.session_badge = QLabel("0 SESSIONS")
         self.session_badge.setObjectName("sessionBadge")
         header.addWidget(self.session_badge)
@@ -77,6 +81,14 @@ class MainWindow(QMainWindow):
         self.history_button.setFixedHeight(38)
         self.history_button.clicked.connect(self._open_history)
         header.addWidget(self.history_button)
+        self.mini_timer_button = QPushButton("◷")
+        self.mini_timer_button.setObjectName("secondaryButton")
+        self.mini_timer_button.setFixedSize(38, 38)
+        self.mini_timer_button.setToolTip(
+            translate(self.language, "mini_timer")
+        )
+        self.mini_timer_button.clicked.connect(self._open_mini_timer)
+        header.addWidget(self.mini_timer_button)
         root_layout.addLayout(header)
 
         root_layout.addStretch(1)
@@ -149,6 +161,59 @@ class MainWindow(QMainWindow):
         self._update_running_state(False)
 
         self._retranslate_ui()
+        self._setup_tray()
+
+    def _setup_tray(self) -> None:
+        self.tray_icon = QSystemTrayIcon(self)
+
+        # Пока используем стандартную иконку приложения.
+        self.tray_icon.setIcon(self.style().standardIcon(
+            self.style().StandardPixmap.SP_ComputerIcon
+        ))
+
+        self.tray_menu = QMenu(self)
+
+        self.show_action = QAction("Открыть", self)
+        self.show_action.triggered.connect(self._show_main_window)
+        self.tray_menu.addAction(self.show_action)
+
+        self.mini_timer_action = QAction("Мини-таймер", self)
+        self.mini_timer_action.triggered.connect(self._open_mini_timer)
+        self.tray_menu.addAction(self.mini_timer_action)
+
+        self.tray_menu.addSeparator()
+
+        self.quit_action = QAction("Выход", self)
+        self.quit_action.triggered.connect(self._quit_application)
+        self.tray_menu.addAction(self.quit_action)
+
+        self.tray_icon.setContextMenu(self.tray_menu)
+        self.tray_icon.activated.connect(self._tray_activated)
+        self.tray_icon.show()
+
+    def _show_main_window(self) -> None:
+        self.showNormal()
+        self.raise_()
+        self.activateWindow()
+
+    def _tray_activated(self, reason: QSystemTrayIcon.ActivationReason) -> None:
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
+            self._show_main_window()
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        if self.timer.is_running:
+            self.hide()
+            event.ignore()
+            return
+
+        self.tray_icon.hide()
+        event.accept()
+
+    def _quit_application(self) -> None:
+        self.tray_icon.hide()
+        self.mini_timer.close()
+        self.close()
+        QApplication.instance().quit()
 
     def _mode_button(self, text: str, mode: TimerMode) -> QPushButton:
         button = QPushButton(text)
@@ -205,6 +270,11 @@ class MainWindow(QMainWindow):
         )
         dialog.exec()
 
+    def _open_mini_timer(self) -> None:
+        self.mini_timer.show()
+        self.mini_timer.raise_()
+        self.mini_timer.activateWindow()
+
     def _retranslate_ui(self) -> None:
         self.setWindowTitle(translate(self.language, "window_title"))
 
@@ -220,6 +290,13 @@ class MainWindow(QMainWindow):
         self.history_button.setText(
             translate(self.language, "history_button")
         )
+        self.mini_timer_button.setToolTip(
+            translate(self.language, "mini_timer")
+        )
+        self.mini_timer.main_window_button.setText(
+            translate(self.language, "show_main_window")
+        )
+        self.mini_timer._update_running_state(self.timer.is_running)
 
     def _update_mode(self, mode: TimerMode) -> None:
         labels = {
