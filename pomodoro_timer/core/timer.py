@@ -136,14 +136,15 @@ class PomodoroTimer(QObject):
 
     def _update_countdown(self) -> None:
         remaining = self.remaining_seconds
+
         if remaining != self._remaining:
-            self._remaining = remaining
-            self.tick.emit(remaining)
             self._remaining = remaining
             self._remaining_by_mode[self._mode] = remaining
             self.tick.emit(remaining)
+
         if remaining <= 0:
             self._complete_phase()
+
 
     def _complete_phase(self) -> None:
         completed_mode = self._mode
@@ -165,10 +166,16 @@ class PomodoroTimer(QObject):
         else:
             next_mode = TimerMode.FOCUS
 
+
         self._mode = next_mode
         self._remaining = self.duration_for(next_mode)
+        self._remaining_by_mode[next_mode] = self._remaining
+
         self.mode_changed.emit(next_mode)
         self.tick.emit(self._remaining)
+
+        self.start()
+
 
     def apply_settings(
             self,
