@@ -1,5 +1,6 @@
 
 from __future__ import annotations
+from datetime import datetime
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
@@ -89,7 +90,10 @@ class HistoryDialog(QDialog):
 
         for row, session in enumerate(sessions):
             completed_at = session["completed_at"]
-            date_text = completed_at.replace("T", " ")
+            parsed_date = datetime.fromisoformat(completed_at)
+
+            date_format = "%d.%m.%Y, %H:%M"
+            date_text = parsed_date.astimezone().strftime(date_format)
 
             duration = session["duration_seconds"]
             minutes, seconds = divmod(duration, 60)

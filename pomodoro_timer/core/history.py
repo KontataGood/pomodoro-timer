@@ -57,3 +57,18 @@ class SessionHistory:
             ).fetchall()
 
         return [dict(row) for row in rows]
+
+
+    def count_completed_focus_sessions(self) -> int:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT COUNT(*)
+                FROM sessions
+                WHERE mode = ?
+                """,
+                ("focus",),
+            ).fetchone()
+
+        return row[0]
+

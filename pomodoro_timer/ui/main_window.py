@@ -279,11 +279,13 @@ class MainWindow(QMainWindow):
             translate(self.language, status_keys[self.timer.mode])
         )
 
-    def _update_session_count(self, count: int) -> None:
-        key = "sessions_one" if count == 1 else "sessions_many"
+    def _update_session_count(self, count: int | None = None) -> None:
+        completed_count = self.history.count_completed_focus_sessions()
+        key = "sessions_one" if completed_count == 1 else "sessions_many"
         self.session_badge.setText(
-            translate(self.language, key, count=count)
+            translate(self.language, key, count=completed_count)
         )
+
 
     def _phase_completed(self, mode: TimerMode) -> None:
         duration = self.timer.duration_for(mode)
@@ -294,6 +296,7 @@ class MainWindow(QMainWindow):
         )
 
         if mode == TimerMode.FOCUS:
+            self._update_session_count()
             key = "focus_completed"
         else:
             key = "break_completed"
