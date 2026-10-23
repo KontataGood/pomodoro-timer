@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 TRANSLATIONS = {
@@ -18,6 +17,7 @@ TRANSLATIONS = {
         "focus": "ФОКУС",
         "short_break": "КОРОТКИЙ ПЕРЕРЫВ",
         "long_break": "ДЛИННЫЙ ПЕРЕРЫВ",
+        "snap_to_edges": "Прилипание мини-таймера к краям экрана",
         "start_focus": "Начать фокус",
         "start_break": "Начать перерыв",
         "start_long_break": "Начать длинный перерыв",
@@ -55,6 +55,7 @@ TRANSLATIONS = {
         "history_duration": "Duration",
         "sessions_one": "{count} SESSION",
         "sessions_many": "{count} SESSIONS",
+        "snap_to_edges": "Snap mini timer to screen edges",
         "focus": "FOCUS TIME",
         "short_break": "SHORT BREAK",
         "long_break": "LONG BREAK",

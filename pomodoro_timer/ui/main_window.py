@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# Импорты стандартной библиотеки и компонентов PySide6.
+
 from pathlib import Path
 
 from PySide6.QtCore import QSettings
@@ -19,6 +21,7 @@ from PySide6.QtWidgets import (
     QApplication,
 )
 
+# Импорты логики таймера, истории и окон интерфейса проекта.
 from pomodoro_timer.core.history import SessionHistory
 from pomodoro_timer.core.timer import PomodoroTimer, TimerMode
 from pomodoro_timer.ui.history_dialog import HistoryDialog
@@ -28,15 +31,21 @@ from pomodoro_timer.ui.translations import translate
 
 
 class MainWindow(QMainWindow):
+    """Главное окно: таймер, настройки, история и системный трей."""
+
     def __init__(self) -> None:
+        """Создаёт окно, загружает настройки и собирает интерфейс."""
         super().__init__()
 
+        # QSettings хранит пользовательские параметры между запусками.
         self.settings = QSettings("KontataGood", "PomodoroTimer")
+        # База истории хранится в домашней папке пользователя.
         data_dir = Path.home() / ".pomodoro_timer"
         self.history = SessionHistory(data_dir / "history.db")
         self.language = self.settings.value("language", "en", type=str)
         self.theme = self.settings.value("theme", "dark", type=str)
 
+        # Читаем длительность фаз и число фокус-сессий до длинного перерыва.
         self.timer_settings = {
             "focus_minutes": self.settings.value("focus_minutes", 25, type=int),
             "short_break_minutes": self.settings.value(
@@ -50,6 +59,7 @@ class MainWindow(QMainWindow):
             ),
         }
 
+        # Создаём основной таймер и отдельное компактное окно таймера.
         self.timer = PomodoroTimer(self, **self.timer_settings)
         self.mini_timer = MiniTimer(self.timer, self)
 
@@ -58,11 +68,13 @@ class MainWindow(QMainWindow):
         self.resize(480, 640)
         self.setStyleSheet(self._stylesheet())
 
+        # Центральный виджет содержит все элементы главного окна.
         root = QWidget()
         root_layout = QVBoxLayout(root)
         root_layout.setContentsMargins(28, 26, 28, 26)
         root_layout.setSpacing(20)
 
+        # Верхняя панель: название, счётчик, настройки, история и мини-таймер.
         header = QHBoxLayout()
         brand = QLabel("POMODORO")
         brand.setObjectName("brand")
@@ -93,6 +105,7 @@ class MainWindow(QMainWindow):
 
         root_layout.addStretch(1)
 
+        # Заголовок текущего режима и карточка с оставшимся временем.
         self.mode_label = QLabel("FOCUS TIME")
         self.mode_label.setObjectName("modeLabel")
         self.mode_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -116,6 +129,7 @@ class MainWindow(QMainWindow):
         card_layout.addWidget(self.status_label)
         root_layout.addWidget(timer_card)
 
+        # Переключатели режима: фокус, короткий и длинный перерыв.
         modes = QHBoxLayout()
         modes.setSpacing(8)
         self.focus_button = self._mode_button("Focus", TimerMode.FOCUS)
@@ -126,6 +140,7 @@ class MainWindow(QMainWindow):
         modes.addWidget(self.long_button)
         root_layout.addLayout(modes)
 
+        # Основные действия пользователя — запуск/пауза и сброс.
         controls = QHBoxLayout()
         controls.setSpacing(10)
         self.start_button = QPushButton("Start focus")
@@ -151,6 +166,7 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(root)
 
+        # Связываем сигналы таймера с обновлением элементов интерфейса.
         self.timer.tick.connect(self._update_time)
         self.timer.mode_changed.connect(self._update_mode)
         self.timer.running_changed.connect(self._update_running_state)
@@ -164,6 +180,7 @@ class MainWindow(QMainWindow):
         self._setup_tray()
 
     def _setup_tray(self) -> None:
+        """Настраивает значок и меню приложения в системном трее."""
         self.tray_icon = QSystemTrayIcon(self)
 
         # Пока используем стандартную иконку приложения.
@@ -192,15 +209,18 @@ class MainWindow(QMainWindow):
         self.tray_icon.show()
 
     def _show_main_window(self) -> None:
+        """Возвращает главное окно на экран и активирует его."""
         self.showNormal()
         self.raise_()
         self.activateWindow()
 
     def _tray_activated(self, reason: QSystemTrayIcon.ActivationReason) -> None:
+        """Обрабатывает щелчок по значку приложения в системном трее."""
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
             self._show_main_window()
 
     def closeEvent(self, event: QCloseEvent) -> None:
+        """При работающем таймере скрывает окно вместо завершения приложения."""
         if self.timer.is_running:
             self.hide()
             event.ignore()
@@ -210,12 +230,14 @@ class MainWindow(QMainWindow):
         event.accept()
 
     def _quit_application(self) -> None:
+        """Полностью завершает приложение из меню системного трея."""
         self.tray_icon.hide()
         self.mini_timer.close()
         self.close()
         QApplication.instance().quit()
 
     def _mode_button(self, text: str, mode: TimerMode) -> QPushButton:
+        """Создаёт кнопку переключения на заданный режим таймера."""
         button = QPushButton(text)
         button.setObjectName("modeButton")
         button.setMinimumHeight(38)
@@ -223,45 +245,70 @@ class MainWindow(QMainWindow):
         return button
 
     def _toggle_timer(self) -> None:
+        """Переключает таймер между запуском и паузой."""
         if self.timer.is_running:
             self.timer.pause()
         else:
             self.timer.start()
 
     def _update_time(self, seconds: int) -> None:
+        """Форматирует оставшееся время и показывает его как MM:SS."""
         minutes, secs = divmod(max(0, seconds), 60)
         self.time_label.setText(f"{minutes:02d}:{secs:02d}")
 
     def _open_settings(self) -> None:
+        """Открывает настройки и сохраняет изменения после подтверждения."""
+        # Читаем сохранённую настройку прилипания.
+        # Если пользователь ещё не менял её, по умолчанию прилипание включено.
+        snap_to_edges = self.settings.value(
+            "snap_to_edges", True, type=bool
+        )
+
+        # Создаём диалог настроек и передаём ему текущие параметры приложения.
         dialog = SettingsDialog(
             language=self.language,
             theme=self.theme,
-            **self.timer_settings,
             parent=self,
+            snap_to_edges=snap_to_edges,
+            **self.timer_settings,
         )
 
+        # Если пользователь нажал «Отмена», ничего не меняем и не сохраняем.
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return
 
+        # Получаем значения, выбранные пользователем в диалоге.
         new_language = dialog.selected_language()
         new_timer_settings = dialog.selected_timer_settings()
         new_theme = dialog.selected_theme()
+        new_snap_to_edges = dialog.selected_snap_to_edges()
 
+        # Обновляем настройки в текущем экземпляре приложения.
         self.language = new_language
         self.timer_settings = new_timer_settings
         self.theme = new_theme
 
+        # Сохраняем язык и тему, чтобы они восстановились при следующем запуске.
         self.settings.setValue("language", self.language)
         self.settings.setValue("theme", self.theme)
 
+        # Сохраняем продолжительность фокуса и перерывов.
         for key, value in self.timer_settings.items():
             self.settings.setValue(key, value)
 
+        # Сохраняем настройку прилипания в постоянное хранилище QSettings.
+        self.settings.setValue("snap_to_edges", new_snap_to_edges)
+
+        # Сразу применяем новое поведение к открытому мини-таймеру.
+        self.mini_timer.snap_to_edges = new_snap_to_edges
+
+        # Применяем продолжительность таймера и обновляем интерфейс.
         self.timer.apply_settings(**self.timer_settings)
         self.setStyleSheet(self._stylesheet())
         self._retranslate_ui()
 
     def _open_history(self) -> None:
+        """Открывает окно с историей завершённых сессий."""
         dialog = HistoryDialog(
             history=self.history,
             language=self.language,
@@ -271,11 +318,13 @@ class MainWindow(QMainWindow):
         dialog.exec()
 
     def _open_mini_timer(self) -> None:
+        """Показывает мини-таймер и переводит его на передний план."""
         self.mini_timer.show()
         self.mini_timer.raise_()
         self.mini_timer.activateWindow()
 
     def _retranslate_ui(self) -> None:
+        """Обновляет подписи интерфейса на выбранном языке."""
         self.setWindowTitle(translate(self.language, "window_title"))
 
         self.focus_button.setText(translate(self.language, "focus"))
@@ -299,6 +348,7 @@ class MainWindow(QMainWindow):
         self.mini_timer._update_running_state(self.timer.is_running)
 
     def _update_mode(self, mode: TimerMode) -> None:
+        """Обновляет заголовок и визуальное выделение выбранного режима."""
         labels = {
             TimerMode.FOCUS: (
                 "focus",
@@ -330,6 +380,7 @@ class MainWindow(QMainWindow):
             button.style().polish(button)
 
     def _update_running_state(self, running: bool) -> None:
+        """Меняет подписи кнопки и статуса в зависимости от состояния таймера."""
         if running:
             self.start_button.setText(translate(self.language, "pause"))
             self.status_label.setText(
@@ -357,6 +408,7 @@ class MainWindow(QMainWindow):
         )
 
     def _update_session_count(self, count: int | None = None) -> None:
+        """Показывает число завершённых фокус-сессий из базы истории."""
         completed_count = self.history.count_completed_focus_sessions()
         key = "sessions_one" if completed_count == 1 else "sessions_many"
         self.session_badge.setText(
@@ -365,6 +417,7 @@ class MainWindow(QMainWindow):
 
 
     def _phase_completed(self, mode: TimerMode) -> None:
+        """Записывает завершённую фазу в историю и обновляет статус."""
         duration = self.timer.duration_for(mode)
 
         self.history.add_session(
@@ -384,6 +437,8 @@ class MainWindow(QMainWindow):
 
 
     def _stylesheet(self) -> str:
+        """Формирует CSS-стили для выбранной темы оформления."""
+        # Для каждой темы задаём палитру; ниже эти значения подставляются в QSS.
         themes = {
             "dark": {
                 "background": "#111318",
@@ -447,6 +502,7 @@ class MainWindow(QMainWindow):
             },
         }
 
+        # Если тема неизвестна, используем тёмную палитру по умолчанию.
         c = themes.get(self.theme, themes["dark"])
 
         return f"""
