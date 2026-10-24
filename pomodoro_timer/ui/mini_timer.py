@@ -71,8 +71,9 @@ class MiniTimer(QWidget):
                 color: #E1E4EA;
                 border: 1px solid #2A2E38;
                 border-radius: 8px;
-                padding: 8px 10px;
-                min-height: 22px;
+                padding: 6px 4px;
+                min-height: 36px;
+                font-size: 11px;
             }
             QPushButton:hover {
                 background-color: #303541;
@@ -108,6 +109,15 @@ class MiniTimer(QWidget):
         )
         self.toggle_button.clicked.connect(self._toggle_timer)
         controls.addWidget(self.toggle_button)
+
+        # Кнопка сброса текущей фазы таймера.
+        self.reset_button = QPushButton()
+        self.reset_button.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed,
+        )
+        self.reset_button.clicked.connect(self._reset_timer)
+        controls.addWidget(self.reset_button)
 
         # Кнопка возврата к главному окну приложения.
         self.main_window_button = QPushButton()
@@ -181,6 +191,10 @@ class MiniTimer(QWidget):
         else:
             self.timer.start()
 
+    def _reset_timer(self) -> None:
+        """Сбрасывает текущую фазу таймера."""
+        self.timer.reset()
+
     def _show_main_window(self) -> None:
         """Скрывает мини-таймер и выводит главное окно на передний план."""
         main_window = self.parentWidget()
@@ -200,6 +214,9 @@ class MiniTimer(QWidget):
         """Обновляет переведённые надписи мини-таймера."""
         self.main_window_button.setText(
             translate(self._language(), "show_main_window")
+        )
+        self.reset_button.setText(
+            translate(self._language(), "restart")
         )
 
         # Повторно обновляем подписи в соответствии с текущим состоянием.
@@ -222,8 +239,8 @@ class MiniTimer(QWidget):
         if event.button() == Qt.MouseButton.LeftButton:
             # Смещение нужно, чтобы окно не прыгало к курсору мыши.
             self._drag_position = (
-                event.globalPosition().toPoint()
-                - self.frameGeometry().topLeft()
+                    event.globalPosition().toPoint()
+                    - self.frameGeometry().topLeft()
             )
             event.accept()
             return
@@ -233,13 +250,13 @@ class MiniTimer(QWidget):
     def mouseMoveEvent(self, event) -> None:
         """Перемещает окно вслед за курсором при зажатой левой кнопке."""
         if (
-            event.buttons() & Qt.MouseButton.LeftButton
-            and hasattr(self, "_drag_position")
+                event.buttons() & Qt.MouseButton.LeftButton
+                and hasattr(self, "_drag_position")
         ):
             # Сохраняем исходное смещение курсора относительно окна.
             new_position = (
-                event.globalPosition().toPoint()
-                - self._drag_position
+                    event.globalPosition().toPoint()
+                    - self._drag_position
             )
             self.move(new_position)
             event.accept()

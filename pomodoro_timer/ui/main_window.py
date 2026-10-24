@@ -42,6 +42,16 @@ class MainWindow(QMainWindow):
         # База истории хранится в домашней папке пользователя.
         data_dir = Path.home() / ".pomodoro_timer"
         self.history = SessionHistory(data_dir / "history.db")
+        # Загружаем срок хранения истории. 0 означает бессрочное хранение.
+        self.history_retention_days = self.settings.value(
+            "history_retention_days", 0, type=int
+        )
+
+        # Удаляем старые записи, если пользователь включил ограничение.
+        if self.history_retention_days > 0:
+            self.history.delete_sessions_older_than(
+                self.history_retention_days
+            )
         self.language = self.settings.value("language", "en", type=str)
         self.theme = self.settings.value("theme", "dark", type=str)
 
@@ -270,6 +280,7 @@ class MainWindow(QMainWindow):
             theme=self.theme,
             parent=self,
             snap_to_edges=snap_to_edges,
+            history_retention_days=self.history_retention_days,
             **self.timer_settings,
         )
 
@@ -282,6 +293,9 @@ class MainWindow(QMainWindow):
         new_timer_settings = dialog.selected_timer_settings()
         new_theme = dialog.selected_theme()
         new_snap_to_edges = dialog.selected_snap_to_edges()
+        new_history_retention_days = (
+            dialog.selected_history_retention()
+        )
 
         # Обновляем настройки в текущем экземпляре приложения.
         self.language = new_language
@@ -291,6 +305,18 @@ class MainWindow(QMainWindow):
         # Сохраняем язык и тему, чтобы они восстановились при следующем запуске.
         self.settings.setValue("language", self.language)
         self.settings.setValue("theme", self.theme)
+        self.history_retention_days = new_history_retention_days
+
+        self.settings.setValue(
+            "history_retention_days",
+            self.history_retention_days,
+        )
+
+        # Применяем новый срок хранения сразу после сохранения настроек.
+        if self.history_retention_days > 0:
+            self.history.delete_sessions_older_than(
+                self.history_retention_days
+            )
 
         # Сохраняем продолжительность фокуса и перерывов.
         for key, value in self.timer_settings.items():

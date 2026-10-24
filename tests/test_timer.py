@@ -125,3 +125,47 @@ def test_apply_settings_updates_mode_durations(qapp):
     # После изменения настроек оставшееся время должно соответствовать
     # новой продолжительности текущего режима фокусировки.
     assert timer.remaining_seconds == 30 * 60
+
+def test_reset_restores_full_duration(qapp):
+    """Проверяет восстановление полной продолжительности текущей фазы."""
+    timer = PomodoroTimer()
+
+    # Имитируем, что прошло 10 минут фокусировки.
+    timer._remaining = 15 * 60
+
+    # Сбрасываем таймер.
+    timer.reset()
+
+    # Должны восстановиться исходные 25 минут.
+    assert timer.remaining_seconds == 25 * 60
+    assert not timer.is_running
+
+
+def test_reset_preserves_current_mode(qapp):
+    """Проверяет, что сброс не меняет текущий режим."""
+    timer = PomodoroTimer()
+
+    # Переключаемся на короткий перерыв и изменяем оставшееся время.
+    timer.set_mode(TimerMode.SHORT_BREAK)
+    timer._remaining = 2 * 60
+
+    # Сбрасываем текущую фазу.
+    timer.reset()
+
+    # Режим остаётся прежним, время восстанавливается до 5 минут.
+    assert timer.mode == TimerMode.SHORT_BREAK
+    assert timer.remaining_seconds == 5 * 60
+
+
+def test_reset_preserves_session_count(qapp):
+    """Проверяет, что сброс не изменяет количество завершённых сессий."""
+    timer = PomodoroTimer()
+
+    # Имитируем две завершённые сессии.
+    timer._session_count = 2
+
+    # Сбрасываем текущую фазу.
+    timer.reset()
+
+    # Счётчик завершённых сессий не должен измениться.
+    assert timer.session_count == 2

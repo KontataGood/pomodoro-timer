@@ -28,6 +28,7 @@ class SettingsDialog(QDialog):
         long_break_minutes: int = 15,
         sessions_before_long_break: int = 4,
         snap_to_edges: bool = True,
+        history_retention_days: int = 0,
     ) -> None:
         """Создаёт элементы управления и заполняет их текущими настройками."""
         super().__init__(parent)
@@ -36,6 +37,7 @@ class SettingsDialog(QDialog):
         self.language = language
         self.theme = theme
         self.snap_to_edges = snap_to_edges
+        self.history_retention_days = history_retention_days
 
         self.setMinimumWidth(300)
 
@@ -106,6 +108,30 @@ class SettingsDialog(QDialog):
         self.snap_checkbox = QCheckBox()
         self.snap_checkbox.setChecked(self.snap_to_edges)
 
+        # Срок хранения истории: 0 означает бессрочное хранение.
+        self.retention_label = QLabel()
+        self.retention_combo = QComboBox()
+
+        self.retention_combo.addItem(
+            translate(self.language, "retention_unlimited"), 0
+        )
+        self.retention_combo.addItem(
+            translate(self.language, "retention_30_days"), 30
+        )
+        self.retention_combo.addItem(
+            translate(self.language, "retention_90_days"), 90
+        )
+        self.retention_combo.addItem(
+            translate(self.language, "retention_180_days"), 180
+        )
+
+        retention_index = self.retention_combo.findData(
+            self.history_retention_days
+        )
+        self.retention_combo.setCurrentIndex(
+            max(0, retention_index)
+        )
+
         # Размещаем кнопки отмены и сохранения в одной строке.
         buttons = QHBoxLayout()
         buttons.addWidget(self.cancel_button)
@@ -152,6 +178,13 @@ class SettingsDialog(QDialog):
         # Добавляем настройку прилипания мини-таймера.
         layout.addWidget(self.snap_checkbox)
 
+        # Добавляем настройку срока хранения истории.
+        self.retention_label.setText(
+            translate(self.language, "history_retention")
+        )
+        layout.addWidget(self.retention_label)
+        layout.addWidget(self.retention_combo)
+
         # Устанавливаем переведённые подписи элементов.
         self._update_texts()
 
@@ -188,6 +221,10 @@ class SettingsDialog(QDialog):
     def selected_snap_to_edges(self) -> bool:
         """Возвращает состояние флажка прилипания мини-таймера."""
         return self.snap_checkbox.isChecked()
+
+    def selected_history_retention(self) -> int:
+        """Возвращает срок хранения истории в днях."""
+        return int(self.retention_combo.currentData())
 
     def _stylesheet(self) -> str:
         """Формирует стили окна настроек для выбранной темы."""

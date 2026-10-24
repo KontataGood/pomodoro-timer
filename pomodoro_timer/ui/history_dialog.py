@@ -10,6 +10,8 @@ from PySide6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
+    QMessageBox,
+    QPushButton,
 )
 
 from pomodoro_timer.core.history import SessionHistory
@@ -43,6 +45,9 @@ class HistoryDialog(QDialog):
         self.empty_label = QLabel()
         self.empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
+        self.clear_button = QPushButton()
+        self.clear_button.clicked.connect(self._clear_history)
+
         # Таблица содержит дату, тип сессии и её продолжительность.
         self.table = QTableWidget(0, 3)
 
@@ -71,6 +76,7 @@ class HistoryDialog(QDialog):
         layout.setSpacing(12)
         layout.addWidget(self.empty_label)
         layout.addWidget(self.table)
+        layout.addWidget(self.clear_button)
 
         # Заполняем таблицу данными и применяем выбранную тему.
         self._populate_table()
@@ -98,6 +104,9 @@ class HistoryDialog(QDialog):
         )
         self.empty_label.setVisible(not sessions)
         self.table.setVisible(bool(sessions))
+        self.clear_button.setText(
+            translate(self.language, "clear_history")
+        )
 
         # Сопоставляем значения режимов с локализованными названиями.
         mode_names = {
@@ -146,6 +155,23 @@ class HistoryDialog(QDialog):
                     & ~Qt.ItemFlag.ItemIsEditable
                 )
                 self.table.setItem(row, column, item)
+
+    def _clear_history(self) -> None:
+        """Очищает историю после подтверждения пользователя."""
+        answer = QMessageBox.question(
+            self,
+            translate(self.language, "clear_history"),
+            translate(self.language, "confirm_clear_history"),
+            QMessageBox.StandardButton.Yes
+            | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+
+        self.history.clear_history()
+        self._populate_table()
 
     def _stylesheet(self) -> str:
         """Формирует стили окна истории для выбранной темы."""

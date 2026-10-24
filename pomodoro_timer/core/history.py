@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 
@@ -96,3 +96,26 @@ class SessionHistory:
 
         # COUNT(*) возвращает число записей, соответствующих условию.
         return row[0]
+
+    def clear_history(self) -> None:
+        """Удаляет все записи из истории сессий."""
+        with self._connect() as connection:
+            connection.execute("DELETE FROM sessions")
+
+    def delete_sessions_older_than(self, days: int) -> int:
+        """Удаляет сессии старше указанного количества дней."""
+        if days < 1:
+            raise ValueError("Количество дней должно быть не меньше 1.")
+
+        cutoff = (
+                datetime.now().astimezone().replace(microsecond=0)
+                - timedelta(days=days)
+        ).isoformat(timespec="seconds")
+
+        with self._connect() as connection:
+            cursor = connection.execute(
+                "DELETE FROM sessions WHERE completed_at < ?",
+                (cutoff,),
+            )
+
+        return cursor.rowcount
