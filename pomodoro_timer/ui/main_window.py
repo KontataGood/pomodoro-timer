@@ -3,10 +3,11 @@ from __future__ import annotations
 # Импорты стандартной библиотеки и компонентов PySide6.
 
 from pathlib import Path
+import sys
 
 from PySide6.QtCore import QSettings
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QAction, QCloseEvent
+from PySide6.QtGui import QAction, QCloseEvent, QIcon
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -36,6 +37,19 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         """Создаёт окно, загружает настройки и собирает интерфейс."""
         super().__init__()
+
+        # Задаём идентификатор приложения для панели задач Windows.
+        if sys.platform == "win32":
+            import ctypes
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+                "KontataGood.PomodoroTimer"
+            )
+
+        # Пути к графическим ресурсам приложения.
+        assets_dir = Path(__file__).resolve().parents[2] / "assets"
+
+        self.app_icon_path = assets_dir / "pomodoro_icon.ico"
+        self.tray_icon_path = assets_dir / "pomodoro_tray_64.png"
 
         # QSettings хранит пользовательские параметры между запусками.
         self.settings = QSettings("KontataGood", "PomodoroTimer")
@@ -84,6 +98,10 @@ class MainWindow(QMainWindow):
         self.mini_timer = MiniTimer(self.timer, self)
 
         self.setWindowTitle("Pomodoro Timer")
+
+        # Устанавливаем иконку главного окна.
+        self.setWindowIcon(QIcon(str(self.app_icon_path)))
+
         self.setMinimumSize(440, 600)
         self.resize(480, 640)
         self.setStyleSheet(self._stylesheet())
@@ -203,10 +221,8 @@ class MainWindow(QMainWindow):
         """Настраивает значок и меню приложения в системном трее."""
         self.tray_icon = QSystemTrayIcon(self)
 
-        # Пока используем стандартную иконку приложения.
-        self.tray_icon.setIcon(self.style().standardIcon(
-            self.style().StandardPixmap.SP_ComputerIcon
-        ))
+        # Устанавливаем собственную иконку системного трея.
+        self.tray_icon.setIcon(QIcon(str(self.tray_icon_path)))
 
         self.tray_menu = QMenu(self)
 
