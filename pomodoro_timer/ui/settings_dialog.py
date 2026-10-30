@@ -29,6 +29,8 @@ class SettingsDialog(QDialog):
         sessions_before_long_break: int = 4,
         snap_to_edges: bool = True,
         history_retention_days: int = 0,
+        sound_enabled: bool = True,
+        notifications_enabled: bool = True,
     ) -> None:
         """Создаёт элементы управления и заполняет их текущими настройками."""
         super().__init__(parent)
@@ -38,6 +40,8 @@ class SettingsDialog(QDialog):
         self.theme = theme
         self.snap_to_edges = snap_to_edges
         self.history_retention_days = history_retention_days
+        self.sound_enabled = sound_enabled
+        self.notifications_enabled = notifications_enabled
 
         self.setMinimumWidth(300)
 
@@ -132,6 +136,16 @@ class SettingsDialog(QDialog):
             max(0, retention_index)
         )
 
+        # Флажок включения звуковых сигналов.
+        self.sound_checkbox = QCheckBox()
+        self.sound_checkbox.setChecked(self.sound_enabled)
+
+        # Флажок включения системных уведомлений.
+        self.notifications_checkbox = QCheckBox()
+        self.notifications_checkbox.setChecked(
+            self.notifications_enabled
+        )
+
         # Размещаем кнопки отмены и сохранения в одной строке.
         buttons = QHBoxLayout()
         buttons.addWidget(self.cancel_button)
@@ -185,6 +199,12 @@ class SettingsDialog(QDialog):
         layout.addWidget(self.retention_label)
         layout.addWidget(self.retention_combo)
 
+        # Добавляем настройку звуковых сигналов.
+        layout.addWidget(self.sound_checkbox)
+
+        # Добавляем настройку системных уведомлений.
+        layout.addWidget(self.notifications_checkbox)
+
         # Устанавливаем переведённые подписи элементов.
         self._update_texts()
 
@@ -198,6 +218,13 @@ class SettingsDialog(QDialog):
         self.cancel_button.setText(translate(self.language, "cancel"))
         self.snap_checkbox.setText(
             translate(self.language, "snap_to_edges")
+        )
+        self.sound_checkbox.setText(
+            translate(self.language, "sound_enabled")
+        )
+
+        self.notifications_checkbox.setText(
+            translate(self.language, "notifications_enabled")
         )
 
     def selected_language(self) -> str:
@@ -221,6 +248,10 @@ class SettingsDialog(QDialog):
     def selected_snap_to_edges(self) -> bool:
         """Возвращает состояние флажка прилипания мини-таймера."""
         return self.snap_checkbox.isChecked()
+
+    def selected_sound_enabled(self) -> bool:
+        """Возвращает состояние настройки звуковых сигналов."""
+        return self.sound_checkbox.isChecked()
 
     def selected_history_retention(self) -> int:
         """Возвращает срок хранения истории в днях."""
@@ -298,3 +329,7 @@ class SettingsDialog(QDialog):
                 color: {c["secondary_text"]};
             }}
         """
+
+    def selected_notifications_enabled(self) -> bool:
+        """Возвращает состояние системных уведомлений."""
+        return self.notifications_checkbox.isChecked()

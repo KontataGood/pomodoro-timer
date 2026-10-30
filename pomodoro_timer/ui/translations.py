@@ -30,6 +30,7 @@ TRANSLATIONS = {
         "long_break_ready": "Ты заслужил длинный перерыв",
         "focus_completed": "Сессия завершена. Время отдохнуть!",
         "break_completed": "Перерыв окончен. Готов работать?",
+        "sound_enabled": "Звуковые сигналы",
         "focus_duration": "Длительность фокуса (мин)",
         "short_break_duration": "Короткий перерыв (мин)",
         "long_break_duration": "Длинный перерыв (мин)",
@@ -51,6 +52,8 @@ TRANSLATIONS = {
         "confirm_clear_history": "Удалить все записи истории? Это действие нельзя отменить.",
         "confirm": "Удалить",
         "history_cleared": "История очищена",
+        "notifications_enabled": "Системные уведомления",
+        "notification_title": "Pomodoro Timer",
     },
     "en": {
         "window_title": "Pomodoro Timer",
@@ -81,6 +84,7 @@ TRANSLATIONS = {
         "long_break_ready": "You've earned a longer break",
         "focus_completed": "Session complete. Time for a break!",
         "break_completed": "Break complete. Ready to focus?",
+        "sound_enabled": "Sound effects",
         "focus_duration": "Focus duration (min)",
         "short_break_duration": "Short break duration (min)",
         "long_break_duration": "Long break duration (min)",
@@ -102,6 +106,8 @@ TRANSLATIONS = {
         "confirm_clear_history": "Delete all history records? This action cannot be undone.",
         "confirm": "Delete",
         "history_cleared": "History cleared",
+        "notifications_enabled": "System notifications",
+        "notification_title": "Pomodoro Timer",
     },
 }
 

@@ -47,6 +47,16 @@ class MainWindow(QMainWindow):
             "history_retention_days", 0, type=int
         )
 
+        # Загружаем настройку звуковых сигналов.
+        self.sound_enabled = self.settings.value(
+            "sound_enabled", True, type=bool
+        )
+
+        # Загружаем настройку системных уведомлений.
+        self.notifications_enabled = self.settings.value(
+            "notifications_enabled", True, type=bool
+        )
+
         # Удаляем старые записи, если пользователь включил ограничение.
         if self.history_retention_days > 0:
             self.history.delete_sessions_older_than(
@@ -218,6 +228,11 @@ class MainWindow(QMainWindow):
         self.tray_icon.activated.connect(self._tray_activated)
         self.tray_icon.show()
 
+        # Проверяем, поддерживает ли система показ уведомлений.
+        self.notifications_available = (
+            QSystemTrayIcon.supportsMessages()
+        )
+
     def _show_main_window(self) -> None:
         """Возвращает главное окно на экран и активирует его."""
         self.showNormal()
@@ -274,13 +289,19 @@ class MainWindow(QMainWindow):
             "snap_to_edges", True, type=bool
         )
 
+        sound_enabled = self.settings.value(
+            "sound_enabled", True, type=bool
+        )
+
         # Создаём диалог настроек и передаём ему текущие параметры приложения.
         dialog = SettingsDialog(
             language=self.language,
             theme=self.theme,
             parent=self,
-            snap_to_edges=snap_to_edges,
             history_retention_days=self.history_retention_days,
+            snap_to_edges=snap_to_edges,
+            sound_enabled=sound_enabled,
+            notifications_enabled=self.notifications_enabled,
             **self.timer_settings,
         )
 
@@ -293,6 +314,10 @@ class MainWindow(QMainWindow):
         new_timer_settings = dialog.selected_timer_settings()
         new_theme = dialog.selected_theme()
         new_snap_to_edges = dialog.selected_snap_to_edges()
+        new_sound_enabled = dialog.selected_sound_enabled()
+        new_notifications_enabled = (
+            dialog.selected_notifications_enabled()
+        )
         new_history_retention_days = (
             dialog.selected_history_retention()
         )
@@ -305,7 +330,19 @@ class MainWindow(QMainWindow):
         # Сохраняем язык и тему, чтобы они восстановились при следующем запуске.
         self.settings.setValue("language", self.language)
         self.settings.setValue("theme", self.theme)
+        self.sound_enabled = new_sound_enabled
+        self.settings.setValue("sound_enabled", self.sound_enabled)
+        self.notifications_enabled = new_notifications_enabled
+        self.settings.setValue(
+            "notifications_enabled",
+            self.notifications_enabled,
+        )
         self.history_retention_days = new_history_retention_days
+
+        # Загружаем настройку звуковых сигналов.
+        self.sound_enabled = self.settings.value(
+            "sound_enabled", True, type=bool
+        )
 
         self.settings.setValue(
             "history_retention_days",
@@ -460,6 +497,21 @@ class MainWindow(QMainWindow):
         self.status_label.setText(
             translate(self.language, key)
         )
+
+        if self.sound_enabled:
+            QApplication.beep()
+
+        # Показываем системное уведомление, если настройка включена.
+        if (
+                self.notifications_enabled
+                and self.tray_icon.supportsMessages()
+        ):
+            self.tray_icon.showMessage(
+                translate(self.language, "notification_title"),
+                translate(self.language, key),
+                QSystemTrayIcon.MessageIcon.Information,
+                5000,
+            )
 
 
     def _stylesheet(self) -> str:
