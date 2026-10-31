@@ -58,6 +58,8 @@ from pomodoro_timer.ui.sidebar import Sidebar
 # Импорт кругового индикатора времени.
 from pomodoro_timer.ui.circular_timer import CircularTimer
 
+from pomodoro_timer.core.autostart import set_autostart
+
 
 class DailyFocusChart(QWidget):
     """Рисует столбчатый график фокусировки за последние семь дней."""
@@ -832,9 +834,8 @@ class MainWindow(QMainWindow):
         behavior_form.addRow(self.settings_notifications_checkbox)
 
         self.settings_autostart_checkbox = QCheckBox()
-        self.settings_autostart_checkbox.setEnabled(sys.platform == "win32")
-        self.settings_autostart_checkbox.setToolTip(
-            "Доступно в Windows" if self.language == "ru" else "Available on Windows"
+        self.settings_autostart_checkbox.setEnabled(
+            sys.platform in ("win32", "darwin")
         )
         behavior_form.addRow(self.settings_autostart_checkbox)
 
@@ -990,7 +991,9 @@ class MainWindow(QMainWindow):
             translate(self.language, "notifications_enabled")
         )
         self.settings_autostart_checkbox.setText(
-            "Запускать вместе с Windows" if is_ru else "Start with Windows"
+            "Запускать вместе с системой"
+            if is_ru
+            else "Start with system"
         )
         self.settings_save_button.setText(
             translate(self.language, "save")
@@ -1003,49 +1006,6 @@ class MainWindow(QMainWindow):
         self.settings_focus_spin.setSuffix(suffix)
         self.settings_short_break_spin.setSuffix(suffix)
         self.settings_long_break_spin.setSuffix(suffix)
-
-    def _set_windows_autostart(self, enabled: bool) -> None:
-        """Добавляет или удаляет автозапуск для текущего пользователя Windows."""
-        if sys.platform != "win32":
-            raise OSError("Автозапуск поддерживается только в Windows")
-
-        import winreg
-
-        run_key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
-        value_name = "PomodoroTimer"
-
-        if enabled:
-            if getattr(sys, "frozen", False):
-                command = subprocess.list2cmdline([sys.executable])
-            else:
-                python_executable = Path(sys.executable)
-                pythonw = python_executable.with_name("pythonw.exe")
-                if not pythonw.exists():
-                    pythonw = python_executable
-                entry_point = Path(__file__).resolve().parents[2] / "main.py"
-                command = subprocess.list2cmdline([str(pythonw), str(entry_point)])
-
-            with winreg.CreateKeyEx(
-                winreg.HKEY_CURRENT_USER,
-                run_key_path,
-                0,
-                winreg.KEY_SET_VALUE,
-            ) as run_key:
-                winreg.SetValueEx(
-                    run_key, value_name, 0, winreg.REG_SZ, command
-                )
-        else:
-            try:
-                with winreg.OpenKey(
-                    winreg.HKEY_CURRENT_USER,
-                    run_key_path,
-                    0,
-                    winreg.KEY_SET_VALUE,
-                ) as run_key:
-                    winreg.DeleteValue(run_key, value_name)
-            except FileNotFoundError:
-                # Запись уже отсутствует — требуемое состояние достигнуто.
-                pass
 
     def _save_settings_page(self) -> None:
         """Проверяет, сохраняет и сразу применяет настройки страницы."""
@@ -1073,17 +1033,17 @@ class MainWindow(QMainWindow):
 
         # Изменяем автозагрузку до сохранения остальных настроек.
         # Если Windows отклонит операцию, остальные параметры не будут частично сохранены.
-        if sys.platform == "win32":
+        if sys.platform in ("win32", "darwin"):
             try:
-                self._set_windows_autostart(new_autostart_enabled)
-            except OSError as error:
+                set_autostart(new_autostart_enabled)
+            except (OSError, subprocess.SubprocessError) as error:
                 QMessageBox.warning(
                     self,
                     "Pomodoro Timer",
                     (
-                        f"Не удалось изменить автозапуск Windows:\n{error}"
+                        f"Не удалось изменить автозапуск:\n{error}"
                         if self.language == "ru"
-                        else f"Could not update Windows startup:\n{error}"
+                        else f"Could not update system startup:\n{error}"
                     ),
                 )
                 return
@@ -1103,11 +1063,8 @@ class MainWindow(QMainWindow):
         self.settings.setValue(
             "notifications_enabled", self.notifications_enabled
         )
-        if sys.platform == "win32":
+        if sys.platform in ("win32", "darwin"):
             self.settings.setValue("autostart_enabled", new_autostart_enabled)
-        self.settings.setValue(
-            "history_retention_days", self.history_retention_days
-        )
         self.settings.setValue("snap_to_edges", new_snap_to_edges)
 
         for key, value in self.timer_settings.items():
