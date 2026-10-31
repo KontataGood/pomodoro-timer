@@ -178,7 +178,7 @@ class MainWindow(QMainWindow):
             assets_dir = Path(__file__).resolve().parents[2] / "assets"
 
         if sys.platform == "darwin":
-            self.app_icon_path = assets_dir / "pomodoro_icon.icns"
+            self.app_icon_path = assets_dir / "pomodoro_icon_1024.png"
         else:
             self.app_icon_path = assets_dir / "pomodoro_icon.ico"
 
@@ -379,9 +379,9 @@ class MainWindow(QMainWindow):
         )
 
         for mode_button in (
-            self.focus_button,
-            self.short_button,
-            self.long_button,
+                self.focus_button,
+                self.short_button,
+                self.long_button,
         ):
             mode_button.setMinimumHeight(42)
             modes.addWidget(mode_button)
@@ -574,12 +574,12 @@ class MainWindow(QMainWindow):
             )
 
         for card, text in zip(
-            (
-                self.stats_focus_card,
-                self.stats_time_card,
-                self.stats_average_card,
-            ),
-            labels,
+                (
+                        self.stats_focus_card,
+                        self.stats_time_card,
+                        self.stats_average_card,
+                ),
+                labels,
         ):
             title = card.findChild(QLabel)
             if title is not None:
@@ -694,8 +694,8 @@ class MainWindow(QMainWindow):
             ).astimezone()
             session_day = completed_at.date()
             daily_totals[session_day] = (
-                daily_totals.get(session_day, 0)
-                + int(session["duration_seconds"])
+                    daily_totals.get(session_day, 0)
+                    + int(session["duration_seconds"])
             )
             daily_counts[session_day] = daily_counts.get(session_day, 0) + 1
 
@@ -1206,7 +1206,7 @@ class MainWindow(QMainWindow):
         self._refresh_history_page()
 
     def _create_history_stat_card(
-        self, title: str
+            self, title: str
     ) -> tuple[QFrame, QLabel]:
         """Создаёт небольшую карточку с названием и значением показателя."""
 
@@ -1260,8 +1260,8 @@ class MainWindow(QMainWindow):
         if selected_period != "all":
             days = int(selected_period)
             period_start = (
-                datetime.now().astimezone().date()
-                - timedelta(days=days - 1)
+                    datetime.now().astimezone().date()
+                    - timedelta(days=days - 1)
             )
             filtered_sessions = [
                 session for session in filtered_sessions
@@ -1418,10 +1418,10 @@ class MainWindow(QMainWindow):
         self._update_session_count()
 
     def _add_placeholder_page(
-        self,
-        page_id: str,
-        title: str,
-        description: str,
+            self,
+            page_id: str,
+            title: str,
+            description: str,
     ) -> None:
         """Добавляет временную страницу раздела в стек экранов."""
 
@@ -1642,8 +1642,8 @@ class MainWindow(QMainWindow):
     def _tray_activated(self, reason: QSystemTrayIcon.ActivationReason) -> None:
         """Открывает главное окно двойным или одиночным кликом по значку."""
         if reason in (
-            QSystemTrayIcon.ActivationReason.Trigger,
-            QSystemTrayIcon.ActivationReason.DoubleClick,
+                QSystemTrayIcon.ActivationReason.Trigger,
+                QSystemTrayIcon.ActivationReason.DoubleClick,
         ):
             self._show_main_window()
 
@@ -1689,7 +1689,6 @@ class MainWindow(QMainWindow):
             self.timer.mode,
         )
         self._update_tray_status()
-
 
     def _open_settings(self) -> None:
         """Открывает настройки и сохраняет изменения после подтверждения."""
@@ -1940,7 +1939,6 @@ class MainWindow(QMainWindow):
             )
         self.cycle_label.setText(cycle_text)
 
-
     def _phase_completed(self, mode: TimerMode) -> None:
         """Записывает завершённую фазу в историю и обновляет статус."""
         duration = self.timer.duration_for(mode)
@@ -1980,7 +1978,6 @@ class MainWindow(QMainWindow):
                 QSystemTrayIcon.MessageIcon.Information,
                 5000,
             )
-
 
     def _stylesheet(self) -> str:
         """Формирует CSS-стили для выбранной темы оформления."""
@@ -2342,32 +2339,47 @@ class MainWindow(QMainWindow):
             background: {c["button_hover"]};
         }}
 
-        /* Кнопки разделов навигации. */
+        /* Контейнеры пунктов навигации. */
+        QFrame#sidebarItem {{
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 12px;
+        }}
+
+        /* Активный пункт — единая плашка для иконки и текста. */
+        QFrame#sidebarItem[active="true"] {{
+            background: {c["active_bg"]};
+            border: 1px solid {c["active_border"]};
+            border-radius: 12px;
+        }}
+
+        /* Кнопки с иконками. */
         QPushButton#sidebarButton {{
             background: transparent;
             color: {c["muted"]};
             font-size: 19px;
-            border-radius: 10px;
+            border: none;
+            border-radius: 9px;
             padding: 0;
         }}
 
         QPushButton#sidebarButton:hover {{
-            background: {c["button_hover"]};
-            color: {c["text"]};
+        color: {c["text"]};
         }}
 
-        QPushButton#sidebarButton[active="true"] {{
-            background: {c["active_bg"]};
+        /* Иконка активного раздела. */
+        QFrame#sidebarItem[active="true"] QPushButton#sidebarButton {{
             color: {c["accent"]};
-            border: 1px solid {c["active_border"]};
         }}
 
-        /* Подписи разделов в раскрытом меню. */
+        /* Подписи разделов. */
         QLabel#sidebarLabel {{
             color: {c["text"]};
             font-size: 12px;
             font-weight: 600;
         }}
+
+        QFrame#sidebarItem[active="true"] QLabel#sidebarLabel {{
+            color: {c["accent"]};
+        }}
         """
-
-

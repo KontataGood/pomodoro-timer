@@ -7,6 +7,7 @@ a = Analysis(
     binaries=[],
     datas=[
         ("assets/pomodoro_tray_64.png", "assets"),
+        ("assets/pomodoro_icon_1024.png", "assets"),
     ],
     hiddenimports=[],
     hookspath=[],

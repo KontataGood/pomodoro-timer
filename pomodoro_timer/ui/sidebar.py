@@ -3,6 +3,7 @@ from __future__ import annotations
 
 # Инструменты Qt для анимации, сигналов и плавного изменения интерфейса.
 from PySide6.QtCore import (
+    Qt,
     QEasingCurve,
     QPropertyAnimation,
     Signal,
@@ -110,8 +111,9 @@ class Sidebar(QFrame):
         """Создаёт кнопку навигации с иконкой и текстовой подписью."""
 
         # Контейнер объединяет кнопку и её текстовую подпись.
-        container = QWidget()
+        container = QFrame()
         container.setObjectName("sidebarItem")
+        container.setProperty("active", False)
 
         layout = QHBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -161,11 +163,15 @@ class Sidebar(QFrame):
 
         # Обновляем свойство active для каждой кнопки.
         for name, button in self.buttons.items():
-            button.setProperty("active", name == page)
+            container = button.parentWidget()
+            is_active = name == page
 
-            # Повторно применяем стили, чтобы сразу обновить подсветку.
-            button.style().unpolish(button)
-            button.style().polish(button)
+            container.setProperty("active", is_active)
+
+            container.style().unpolish(container)
+            container.style().polish(container)
+
+            button.setStyleSheet("")
 
     def toggle(self) -> None:
         """Переключает панель между компактным и раскрытым состояниями."""
