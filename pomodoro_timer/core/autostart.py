@@ -70,6 +70,9 @@ def _set_windows_autostart(enabled: bool) -> None:
 
 
 def _get_macos_launch_arguments() -> list[str]:
+    print("FROZEN:", getattr(sys, "frozen", False))
+    print("EXECUTABLE:", sys.executable)
+    print("BUNDLE:", Path(sys.executable).resolve().parents[2])
     """Возвращает команду запуска приложения на macOS."""
 
     if getattr(sys, "frozen", False):
@@ -89,11 +92,13 @@ def _get_macos_launch_arguments() -> list[str]:
     return [sys.executable, str(entry_point)]
 
 
+
 def _set_macos_autostart(enabled: bool) -> None:
-    """Создаёт или удаляет Launch Agent текущего пользователя."""
+    """Создаёт, загружает или удаляет Launch Agent текущего пользователя."""
 
     launch_agents_dir = Path.home() / "Library" / "LaunchAgents"
     plist_path = launch_agents_dir / f"{MACOS_AGENT_LABEL}.plist"
+    domain = f"gui/{os.getuid()}"
 
     if enabled:
         launch_agents_dir.mkdir(parents=True, exist_ok=True)
@@ -112,19 +117,30 @@ def _set_macos_autostart(enabled: bool) -> None:
                 plistlib.dump(plist_data, file)
 
             temporary_path.replace(plist_path)
-        except OSError:
+
+            # Если агент уже загружен, сначала выгружаем старую конфигурацию.
+            subprocess.run(
+                ["/bin/launchctl", "bootout", domain, str(plist_path)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            # Регистрируем новую конфигурацию.
+            subprocess.run(
+                ["/bin/launchctl", "bootstrap", domain, str(plist_path)],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+
+        except (OSError, subprocess.SubprocessError):
             temporary_path.unlink(missing_ok=True)
             raise
 
     else:
-        # Если агент уже загружен, просим launchd выгрузить его.
         subprocess.run(
-            [
-                "/bin/launchctl",
-                "bootout",
-                f"gui/{os.getuid()}",
-                str(plist_path),
-            ],
+            ["/bin/launchctl", "bootout", domain, str(plist_path)],
             capture_output=True,
             text=True,
             check=False,

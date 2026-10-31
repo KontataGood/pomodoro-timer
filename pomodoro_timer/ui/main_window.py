@@ -172,9 +172,16 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         # Пути к графическим ресурсам приложения.
-        assets_dir = Path(__file__).resolve().parents[2] / "assets"
+        if getattr(sys, "frozen", False):
+            assets_dir = Path(sys._MEIPASS) / "assets"
+        else:
+            assets_dir = Path(__file__).resolve().parents[2] / "assets"
 
-        self.app_icon_path = assets_dir / "pomodoro_icon.ico"
+        if sys.platform == "darwin":
+            self.app_icon_path = assets_dir / "pomodoro_icon.icns"
+        else:
+            self.app_icon_path = assets_dir / "pomodoro_icon.ico"
+
         self.tray_icon_path = assets_dir / "pomodoro_tray_64.png"
 
         # QSettings хранит пользовательские параметры между запусками.

@@ -22,6 +22,7 @@ Thumbs.db
 build/
 dist/
 *.spec
+!PomodoroTimer.spec
 
 # Packaged desktop builds
 PomodoroTimer-macOS.zip

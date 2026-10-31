@@ -1,28 +1,52 @@
+
 #!/usr/bin/env bash
 set -euo pipefail
 
 cd "$(dirname "$0")"
 
-if ! command -v python3 >/dev/null 2>&1; then
-  echo "Python 3 was not found. Install Python 3.10+ first."
-  exit 1
+echo "=================================="
+echo "       Pomodoro Timer Build"
+echo "             macOS"
+echo "=================================="
+
+# Проверяем виртуальное окружение.
+if [[ ! -x ".venv/bin/python" ]]; then
+    echo "Error: .venv not found."
+    echo "Create it with: python3 -m venv .venv"
+    exit 1
 fi
 
-python3 -m venv .venv
 source .venv/bin/activate
 
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt pyinstaller
+# Устанавливаем зависимости проекта.
+python -m pip install -r requirements.txt
 
+# Проверяем наличие PyInstaller.
+if ! python -c "import PyInstaller" >/dev/null 2>&1; then
+    python -m pip install pyinstaller
+fi
 
+echo
+echo "Python version:"
+python --version
+
+echo
+echo "Architecture:"
+python -c "import platform; print(platform.machine())"
+
+echo
+echo "Building PomodoroTimer.app..."
+
+# Используем единую конфигурацию PyInstaller.
 python -m PyInstaller \
     --noconfirm \
     --clean \
-    --windowed \
-    --name PomodoroTimer \
-    main.py
-
+    PomodoroTimer.spec
 
 echo
-echo "Build complete: dist/PomodoroTimer.app"
+echo "=================================="
+echo "Build complete!"
+echo "Output: dist/PomodoroTimer.app"
+echo "=================================="
+
 open dist
