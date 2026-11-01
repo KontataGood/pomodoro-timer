@@ -1,16 +1,22 @@
 # Pomodoro Timer
 
-A small cross-platform Pomodoro desktop app built with Python and PySide6 for Windows and macOS.
+A cross-platform Pomodoro desktop application built with Python and PySide6 for Windows and macOS.
 
-## MVP features
+Pomodoro Timer helps you organize focus sessions and breaks using a clean, minimal desktop interface.
 
-- 25-minute focus sessions
-- 5-minute short breaks
-- 15-minute long break after every 4 completed focus sessions
-- Start, pause, resume, and reset
-- Session counter
-- Dark, minimal desktop interface
-- Countdown based on a monotonic clock to avoid accumulating timing drift
+## Features
+
+- Pomodoro timer with configurable focus, short break, and long break durations.
+- Automatic switching between focus and break sessions.
+- Session counter.
+- Local session history stored in SQLite.
+- History dialog with completed sessions, timestamps, and durations.
+- Session statistics.
+- Russian and English localization.
+- Multiple color themes.
+- System tray integration.
+- Application startup on system login.
+- Custom application icons for Windows and macOS.
 
 ## Requirements
 
@@ -19,25 +25,30 @@ A small cross-platform Pomodoro desktop app built with Python and PySide6 for Wi
 
 ## Run from source
 
-Create a virtual environment:
+Clone the repository:
 
 ```bash
-python -m venv .venv
+git clone https://github.com/KontataGood/pomodoro-timer.git
+cd pomodoro-timer
 ```
 
-Activate it:
+Create and activate a virtual environment.
 
-**Windows PowerShell**
+**Windows PowerShell:**
+
 ```powershell
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-**macOS**
+**macOS:**
+
 ```bash
+python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-Install and run:
+Install dependencies and run:
 
 ```bash
 python -m pip install -r requirements.txt
@@ -46,64 +57,115 @@ python main.py
 
 ## Build for Windows
 
-On Windows, double-click `build_windows.bat`. The resulting executable is `dist/PomodoroTimer.exe`.
+On Windows, run:
+
+```powershell
+.\build_windows.bat
+```
+
+The build uses `PomodoroTimer_Windows.spec`.
+
+The resulting application is available at:
+
+```text
+dist/PomodoroTimer.exe
+```
 
 ## Build for macOS
 
-On a Mac, run from Terminal:
+On macOS, run:
 
 ```bash
 chmod +x build_macos.sh
 ./build_macos.sh
 ```
 
-The resulting application bundle is `dist/PomodoroTimer.app`.
+The resulting application bundle is:
 
-The macOS build produced by this project is unsigned and not notarized. macOS may show a security warning when opening it. Public distribution should use code signing and notarization.
-
-## Build both platforms on GitHub
-
-The GitHub Actions workflow at `.github/workflows/build-desktop.yml` builds the Windows and macOS versions on their respective runners.
-
-1. Push the project to GitHub.
-2. Open **Actions** and run **Build Desktop Apps** to build test artifacts.
-3. Download `PomodoroTimer-Windows` or `PomodoroTimer-macOS` from the completed workflow run.
-
-To create a GitHub Release with both packaged builds attached, push a version tag:
-
-```bash
-git tag v0.2.0
-git push origin v0.2.0
+```text
+dist/PomodoroTimer.app
 ```
 
-The workflow builds both platforms and attaches `PomodoroTimer-Windows.zip` and `PomodoroTimer-macOS.zip` to the release.
+**macOS distribution notice:** The application is currently unsigned and not notarized. macOS may display a security warning when opening it. Public distribution should use Apple code signing and notarization.
+
+## GitHub Actions
+
+The GitHub Actions workflow at `.github/workflows/build-desktop.yml` builds Windows and macOS versions on their respective runners.
+
+To build test artifacts:
+
+1. Push your changes to GitHub.
+2. Open the repository's **Actions** tab.
+3. Run **Build Desktop Apps**.
+4. Download the generated Windows or macOS artifact.
+
+## GitHub Release
+
+To publish a release, create and push a version tag.
+
+For version `1.0.0`:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The GitHub Actions workflow builds both platforms and attaches the packaged archives to the release:
+
+- `PomodoroTimer-Windows.zip`
+- `PomodoroTimer-macOS.zip`
 
 ## Tests
 
+Install pytest:
+
 ```bash
 python -m pip install pytest
-python -m pytest
 ```
 
-## Project structure
+Run the test suite:
+
+```bash
+python -m pytest -q
+```
+
+## Technologies
+
+- Python
+- PySide6 / Qt
+- SQLite
+- PyInstaller
+- GitHub Actions
+
+## Project Structure
 
 ```text
 pomodoro-timer/
+├── .github/
+│   └── workflows/
+│       └── build-desktop.yml
+├── assets/
+├── pomodoro_timer/
+│   ├── core/
+│   └── ui/
+├── tests/
 ├── main.py
 ├── requirements.txt
 ├── build_windows.bat
 ├── build_macos.sh
-├── pomodoro_timer/
-│   ├── core/timer.py
-│   └── ui/main_window.py
-├── tests/
-└── .github/workflows/build-desktop.yml
+├── PomodoroTimer_Windows.spec
+├── PomodoroTimer.spec
+├── README.md
+└── CHANGELOG.md
 ```
 
 ## Roadmap
 
-- Custom work and break durations
-- Sound and desktop notifications
-- Persistent daily statistics
-- Optional system-tray mode
-- Signed and notarized macOS distribution
+- Sound notifications.
+- Desktop notifications.
+- Persistent daily statistics.
+- Code signing and notarization for macOS distribution.
+
+## License
+
+See the repository for license information.

@@ -23,6 +23,7 @@ build/
 dist/
 *.spec
 !PomodoroTimer.spec
+!PomodoroTimer_Windows.spec
 
 # Packaged desktop builds
 PomodoroTimer-macOS.zip
